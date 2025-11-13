@@ -6,6 +6,11 @@ pipeline {
                 echo 'Deu certo!'
             }
         }
+        stage('Another Test') {
+            steps {
+                echo 'Another stage executed!'
+            }
+        }
 
     }
 }
