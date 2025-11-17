@@ -44,6 +44,15 @@ pipeline {
             
             }
         }
+        stage('Deploy Frontend') {
+            steps {
+                dir('frontend') {
+                    git branch: 'master', credentialsId: 'github_login', url: 'https://github.com/Piborus/tasks-frontend-jenkins'
+                    bat 'mvn clean package'
+                    deploy adapters: [tomcat9(credentialsId: 'TomCatLogin', path: '', url: 'http://localhost:8001/')], contextPath: 'tasks', war: 'target/tasks.war'
+                }
+            }
+        }
 
     }
 }
