@@ -1,46 +1,49 @@
 pipeline {
     agent any
-    stages {
-        stage('Build BackEnd') {
-            steps {
-                bat 'mvn clean package -DskipTests=true'
+        stages {
+            stage('Build BackEnd') {
+                steps {
+                    bat 'mvn clean package -DskipTests=true'
+                }
             }
-        }
-        stage('Unit Tests') {
-            steps {
-                bat 'mvn test'
+            stage('Unit Tests') {
+                steps {
+                    bat 'mvn test'
+                }
             }
-        }
-         stage('Sonar Analysis') {
-            environment {
-                scannerHome = tool 'SONAR_SCANNER'
+            stage('Sonar Analysis') {
+                environment {
+                    scannerHome = tool 'SONAR_SCANNER'
+                }
+                steps {
+                    withSonarQubeEnv('SONAR_LOCAL') {
+                    bat "${scannerHome}/bin/sonar-scanner -e -Dsonar.projectKey=DeployBack -Dsonar.host.url=http://localhost:9000 -Dsonar.login=98367daf223547951f1d398f491c2a77ffecdf83 -Dsonar.java.binaries=target -Dsonar.coverage.exclusions=**/.mvn/**,**/src/test/**,**/model/**,**Application.java "
+                    }
+                }
             }
-            steps {
-                withSonarQubeEnv('SONAR_LOCAL') {
-                bat "${scannerHome}/bin/sonar-scanner -e -Dsonar.projectKey=DeployBack -Dsonar.host.url=http://localhost:9000 -Dsonar.login=98367daf223547951f1d398f491c2a77ffecdf83 -Dsonar.java.binaries=target -Dsonar.coverage.exclusions=**/.mvn/**,**/src/test/**,**/model/**,**Application.java "
+            stage('Quality Gate') {
+                steps {
+                    sleep(30)
+                    timeout(time: 1, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+
                 }
             }
         }
-        stage('Quality Gate') {
+        stage('Deploy Backend'){
             steps {
-                sleep(30)
-                timeout(time: 1, unit: 'MINUTES') {
-                waitForQualityGate abortPipeline: true
-
+                deploy adapters: [tomcat9(credentialsId: 'TomCatLogin', path: '', url: 'http://localhost:8001/')], contextPath: 'tasks-backend', war: 'target/tasks-backend.war'
             }
         }
-    }
-    stage('Deploy Backend'){
-        steps {
-            deploy adapters: [tomcat9(credentialsId: 'TomCatLogin', path: '', url: 'http://localhost:8001/')], contextPath: 'tasks-backend', war: 'target/tasks-backend.war'
+        stage('API Test'){
+            steps {
+                dir('api-test') {
+                    git branch: 'main', credentialsId: 'github_login', url: 'https://github.com/Piborus/tasks-api-test'
+                    bat 'mvn test'
+                }       
+            
+            }
         }
-    }
-    stage('API Test'){
-        steps {
-            git branch: 'main', credentialsId: 'github_login', url: 'https://github.com/Piborus/tasks-api-test'
-            bat 'mvn test'
-        }
-    }
 
     }
 }
