@@ -72,7 +72,7 @@ pipeline {
             steps {
                 sleep(30)
                 dir('health-check') {
-                    bat 'mvn verify -Dskip.surefire.tests'
+                    bat ' mvn verify -DskipSurefireTests'
                 }       
             
             }
