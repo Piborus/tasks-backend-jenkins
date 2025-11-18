@@ -70,9 +70,10 @@ pipeline {
         }
         stage('Health Check'){
             steps {
-                sleep(30)
+                sleep(60)
                 dir('health-check') {
-                    bat ' mvn verify -DskipSurefireTests'
+                    git branch: 'main', credentialsId: 'github_login', url: 'https://github.com/Piborus/task-functional-test'
+                    bat 'mvn verify -DskipSurefireTests'
                 }       
             
             }
