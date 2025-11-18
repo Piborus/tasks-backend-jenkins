@@ -70,7 +70,7 @@ pipeline {
         }
         stage('Health Check'){
             steps {
-                sleep(60)
+                sleep(30)
                 dir('health-check') {
                     git branch: 'main', credentialsId: 'github_login', url: 'https://github.com/Piborus/task-functional-test'
                     bat 'mvn verify -DskipSurefireTests'
@@ -79,6 +79,12 @@ pipeline {
             }
         }
 
+    }
+    post {
+        always {
+            junit allowEmptyResults: true, stdioRetention: '', testResults: 'target/surefire-reports/*.xml, 
+            api-test/target/surefire-reports/*.xml, functional-test/target/surefire-reports/*.xml, functional-test/target/failsafe-reports/*.xml'
+        }
     }
 }
 
